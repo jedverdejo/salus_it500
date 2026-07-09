@@ -11,7 +11,9 @@ de forma totalmente asíncrona (sin bloquear el event loop de HA).
 ## Características
 
 - Configuración desde la interfaz de HA (`config_flow`), sin YAML.
-- Dos zonas de climatización (`climate.CH1` / `climate.CH2`).
+- Dos **zonas de calefacción** (`climate.CH1` / `climate.CH2`). No se
+  implementa la zona de **agua caliente (hot water)** que también soporta
+  el Salus iT500 a nivel de API.
 - Modos `OFF` / `AUTO` por zona.
 - Lectura de temperatura actual y de consigna.
 - Ajuste de temperatura objetivo por zona.
@@ -71,6 +73,19 @@ El código fuente vive en `custom_components/salus_it500/`. La carpeta
 `binary_sensor.py`) que se dejan como referencia para quien quiera
 retomarlas, pero **no forman parte del paquete instalable**.
 
+## Créditos y referencias
+
+El cliente de la API (`salus_api.py`) es una implementación propia, escrita
+analizando directamente las peticiones/respuestas del portal
+`salus-it500.com`, pero el diseño general de esta integración se ha
+inspirado en desarrollos previos de la comunidad de Home Assistant para
+este mismo dispositivo:
+
+- [floringhimie/salusfy](https://github.com/floringhimie/salusfy) — primer
+  custom component conocido para el Salus iT500 en Home Assistant.
+- [RichyA/pyit500](https://github.com/RichyA/pyit500) — librería Python
+  para la API del iT500, usada como referencia de partida.
+  
 ## Licencia
 
 MIT — ver [LICENSE](LICENSE).
