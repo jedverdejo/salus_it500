@@ -99,9 +99,13 @@ class Salusit500Climate(CoordinatorEntity, ClimateEntity):
         temp = kwargs.get("temperature")
         if temp is not None:
             await self.coordinator.api.set_temperature(temp, self._zone)
-            # Forzamos una actualización inmediata para que la UI se refresque
-            await asyncio.sleep(1)
-            await self.coordinator.async_request_refresh()
+            # set_temperature ya actualiza el caché local (coordinator.api.data),
+            # así que podemos reflejar el cambio en la UI al instante sin
+            # esperar a una nueva consulta al servidor de Salus (lento).
+            self.async_write_ha_state()
+            # Confirmamos el estado real con el servidor en segundo plano,
+            # sin bloquear la respuesta al usuario.
+            self.hass.async_create_task(self._delayed_refresh())
 
     @property
     def hvac_mode(self):
@@ -123,15 +127,25 @@ class Salusit500Climate(CoordinatorEntity, ClimateEntity):
         if hvac_mode == HVACMode.OFF:
             # Enviamos el comando de apagado a la API
             await self.coordinator.api.set_hvac_mode(MODE_OFF, self._zone)
+            optimistic_auto_off = "1"
         elif hvac_mode == HVACMode.HEAT:
             # En Salus, "Heat" suele corresponder al modo Auto o Manual
             await self.coordinator.api.set_hvac_mode(MODE_AUTO, self._zone)
+            optimistic_auto_off = "0"
         else:
            await self.coordinator.api.set_hvac_mode(MODE_AUTO, self._zone)
+           optimistic_auto_off = "0"
 
-        # Forzamos al coordinador a actualizar los datos inmediatamente 
-        # para que el icono en la interfaz cambie de color sin esperar 60s
-        await asyncio.sleep(1)
+        # A diferencia de set_temperature, set_hvac_mode no actualiza el
+        # caché local por sí solo: lo hacemos aquí para que la UI refleje
+        # el cambio al instante en lugar de esperar al servidor de Salus.
+        self.coordinator.api.data[f"CH{self._zone}autoOff"] = optimistic_auto_off
+        self.async_write_ha_state()
+        self.hass.async_create_task(self._delayed_refresh())
+
+    async def _delayed_refresh(self):
+        """Confirma el estado real con el servidor de Salus sin bloquear la UI."""
+        await asyncio.sleep(2)
         await self.coordinator.async_request_refresh()
     
     @property
