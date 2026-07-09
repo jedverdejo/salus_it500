@@ -1,0 +1,13 @@
+{
+  "domain": "salus_it500",
+  "name": "Salus iT500 Asíncrono",
+  "config_flow": true,
+  "version": "1.0.0",
+  "documentation": "https://github.com/jedverdejo/salus_it500",
+  "issue_tracker": "https://github.com/jedverdejo/salus_it500/issues",
+  "dependencies": [],
+  "codeowners": ["@jedverdejo"],
+  "iot_class": "cloud_polling",
+  "integration_type": "hub",
+  "requirements": []
+}

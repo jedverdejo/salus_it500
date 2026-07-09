@@ -1,0 +1,24 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Conectar termostato Salus iT500",
+        "description": "Introduce las credenciales de tu cuenta de salus-it500.com y el identificador del dispositivo (devId).",
+        "data": {
+          "name": "Nombre",
+          "username": "Usuario (email)",
+          "password": "Contraseña",
+          "id": "ID del dispositivo (devId)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Usuario o contraseña incorrectos.",
+      "cannot_connect": "No se ha podido conectar con salus-it500.com. Inténtalo de nuevo.",
+      "unknown": "Error inesperado."
+    },
+    "abort": {
+      "already_configured": "Este dispositivo ya está configurado."
+    }
+  }
+}
