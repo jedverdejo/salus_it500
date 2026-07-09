@@ -20,7 +20,7 @@ import re
 import time
 import json
 from typing import Any
-from .exceptions import (IT500AuthenticationError, IT500CommandError, IT500ConnectionError, IT500InvalidParameter)
+from .exceptions import (IT500Error, IT500AuthenticationError, IT500CommandError, IT500ConnectionError, IT500InvalidParameter)
 from .const import MODE_OFF, MODE_AUTO, MODE_MANUAL, MAX_TEMP, MIN_TEMP, SCHEDULE_DAYS, SCHEDULE_SERVICE 
 
 _LOGGER = logging.getLogger(__name__)
