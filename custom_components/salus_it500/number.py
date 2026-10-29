@@ -1,53 +1,50 @@
-"""Number platform for Salus integration (frost temperature)."""
+"""Temperatura antihielo (S09), en centésimas de grado."""
+from homeassistant.components.number import NumberDeviceClass, NumberEntity
+from homeassistant.exceptions import HomeAssistantError
 
-import asyncio
-import logging
-from homeassistant.components.number import NumberEntity, NumberDeviceClass
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from .const import DOMAIN, MIN_TEMP, MAX_TEMP
-from .salus_api import STR_FROSTT
+from .client import ATTR_FROST, ArrayentError
+from .const import DOMAIN
+from .entity import SalusEntity
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
-    """Set up the Salus Number platform from config entry."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
-    
-    entities = [
-        SalusFrostNumber(coordinator)
-    ]
-    async_add_entities(entities)
+    if ATTR_FROST in coordinator.data:
+        uid = entry.unique_id or entry.entry_id
+        async_add_entities([SalusFrostNumber(coordinator, uid, entry.title)])
 
-class SalusFrostNumber(CoordinatorEntity, NumberEntity):
-    """Expose frost temperature as a number entity."""
+
+class SalusFrostNumber(SalusEntity, NumberEntity):
     _attr_device_class = NumberDeviceClass.TEMPERATURE
-    _attr_native_unit_of_measurement = "ºC"
-
-    _attr_native_min_value = MIN_TEMP
-    _attr_native_max_value = MAX_TEMP
+    _attr_native_unit_of_measurement = "°C"
+    _attr_native_min_value = 4
+    _attr_native_max_value = 17
     _attr_native_step = 0.5
     _attr_icon = "mdi:snowflake-thermometer"
 
-    def __init__(self, coordinator):
-        super().__init__(coordinator)
-        self.coordinator = coordinator
-        self._attr_name = f"{coordinator.api.name} Frost temp"
-        self._attr_unique_id = f"{coordinator.api._id}_frost_temp"
+    def __init__(self, coordinator, uid, title):
+        super().__init__(coordinator, uid, title)
+        self._attr_name = f"{title} Frost temp"
+        self._attr_unique_id = f"{uid}_frost_temp"
+
+    def _raw(self):
+        try:
+            return float(self.coordinator.data.get(ATTR_FROST))
+        except (TypeError, ValueError):
+            return None
 
     @property
-    def native_value(self) -> float | None:
-        return float(self.coordinator.api.data.get(f"{STR_FROSTT}"))
+    def native_value(self):
+        raw = self._raw()
+        if raw is None:
+            return None
+        # Formato sin confirmar: centésimas (≥100) o grados directos.
+        return raw / 100 if raw >= 100 else raw
 
     async def async_set_native_value(self, value: float) -> None:
-        # NOTA: la API pide una "zona" aunque el valor de antihielo parece
-        # ser único para todo el dispositivo. Se usa zona 1 por defecto;
-        # revisa que el comportamiento sea el esperado en tu termostato.
-        await self.coordinator.api.async_set_frost(value, 1)
-        self.coordinator.api.data[STR_FROSTT] = value
-        self.async_write_ha_state()
-        self.hass.async_create_task(self._delayed_refresh())
-
-    async def _delayed_refresh(self):
-        """Confirma el estado real con el servidor de Salus sin bloquear la UI."""
-        await asyncio.sleep(2)
+        centi = (self._raw() or 500) >= 100
+        try:
+            await self.coordinator.client.set_frost(value, centi=centi)
+        except ArrayentError as err:
+            raise HomeAssistantError(f"Salus no aplicó el cambio: {err}") from err
         await self.coordinator.async_request_refresh()
-

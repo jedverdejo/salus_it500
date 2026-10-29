@@ -3,22 +3,39 @@
     "step": {
       "user": {
         "title": "Conectar termostato Salus iT500",
-        "description": "Introduce las credenciales de tu cuenta de salus-it500.com y el identificador del dispositivo (devId).",
+        "description": "Usa la misma cuenta que en la app iT500 Plus. La apikey debes obtenerla tú de la app (consulta el README); no se incluye en esta integración.",
         "data": {
           "name": "Nombre",
           "username": "Usuario (email)",
           "password": "Contraseña",
-          "id": "ID del dispositivo (devId)"
+          "api_key": "apikey de la app"
+        }
+      },
+      "device": {
+        "title": "Elige el termostato",
+        "data": {
+          "dev_id": "Dispositivo"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Actualizar acceso a Salus",
+        "description": "El portal salus-it500.com ya no responde. Introduce tus credenciales y la apikey para usar la nube de la app iT500 Plus.",
+        "data": {
+          "username": "Usuario (email)",
+          "password": "Contraseña",
+          "api_key": "apikey de la app"
         }
       }
     },
     "error": {
-      "invalid_auth": "Usuario o contraseña incorrectos.",
-      "cannot_connect": "No se ha podido conectar con salus-it500.com. Inténtalo de nuevo.",
+      "invalid_auth": "Usuario, contraseña o apikey incorrectos.",
+      "cannot_connect": "No se ha podido conectar con la nube de Salus.",
+      "no_devices": "La cuenta no tiene termostatos.",
       "unknown": "Error inesperado."
     },
     "abort": {
-      "already_configured": "Este dispositivo ya está configurado."
+      "already_configured": "Este dispositivo ya está configurado.",
+      "reauth_successful": "Acceso actualizado correctamente."
     }
   }
 }

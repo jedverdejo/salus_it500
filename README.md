@@ -1,35 +1,36 @@
 # Salus iT500 (Asíncrono) para Home Assistant
 
 Integración custom para Home Assistant que permite controlar un termostato
-**Salus iT500** a través del portal cloud `salus-it500.com`, usando `aiohttp`
+**Salus iT500** a través de la nube de la app oficial, usando `aiohttp`
 de forma totalmente asíncrona (sin bloquear el event loop de HA).
 
-> ⚠️ Integración no oficial, sin relación con Salus/Computime. Depende del
-> portal web `salus-it500.com`, no documentado públicamente, así que puede
-> dejar de funcionar si Salus cambia su API.
+> ⚠️ Integración no oficial, sin relación con Salus/Computime.
+>
+> **Desde la v2.0** usa la nube de la app Android *iT500 Plus*
+> (`com.saluscontrols.it500v2`, API de Arrayent), porque el portal
+> `salus-it500.com` dejó de responder en octubre de 2026. Es una API no
+> documentada: puede cambiar sin aviso.
 
 ## Características
 
-- Configuración desde la interfaz de HA (`config_flow`), sin YAML.
-- Dos **zonas de calefacción** (`climate.CH1` / `climate.CH2`). No se
-  implementa la zona de **agua caliente (hot water)** que también soporta
-  el Salus iT500 a nivel de API.
-- Modos `OFF` / `AUTO` por zona.
-- Lectura de temperatura actual y de consigna.
-- Ajuste de temperatura objetivo por zona.
-- Ajuste de temperatura antihielo (`number.frost_temp`).
-- Interruptor maestro para apagar/encender ambas zonas a la vez (`switch`).
-- Actualización de datos cada 60 s mediante `DataUpdateCoordinator`.
+- Configuración desde la interfaz de HA (`config_flow`), sin YAML; el
+  termostato se descubre solo a partir de tu cuenta.
+- Dos **zonas de calefacción**. La zona de **agua caliente** no está
+  implementada.
+- Modos por zona: `OFF`, `AUTO` (incluye "hold" temporal, visible en el
+  atributo `hold`) y `HEAT` (manual).
+- Temperatura actual y consigna; ajuste de consigna por zona.
+- Interruptor maestro para apagar/poner en AUTO ambas zonas.
+- Temperatura antihielo (`number`, valor en centésimas de grado).
+- Los cambios esperan la **confirmación real** del termostato (suele tardar
+  unos 10 s) y, si el servidor ignora la orden, HA muestra un error en vez
+  de aparentar que funcionó.
+- Datos cada 30 s con `DataUpdateCoordinator`.
 
 ## Limitaciones conocidas
 
-- **No se distingue el modo Manual del modo Auto**: la API de Salus no
-  ofrece una forma fiable de diferenciarlos, así que solo se exponen los
-  modos `OFF` y `AUTO`.
-- No se procesan los horarios/programaciones (`schedule`), aunque la
-  respuesta cruda de la API los incluye.
-- La lectura de batería y versión OTA está implementada en `salus_api.py`
-  pero no se expone como entidad todavía (ver `dev_reference/` en este repo).
+- No se procesan los horarios/programaciones.
+- Hace falta la **apikey de la app** (ver más abajo).
 
 ## Instalación
 
@@ -48,15 +49,21 @@ de forma totalmente asíncrona (sin bloquear el event loop de HA).
 
 ## Configuración
 
-1. **Ajustes → Dispositivos y servicios → Añadir integración** → busca
-   "Salus iT500 Asíncrono".
-2. Introduce:
-   - **Nombre**: el que quieras para identificar el termostato.
-   - **Usuario**: el email de tu cuenta en salus-it500.com.
-   - **Contraseña**: la de esa cuenta.
-   - **ID del dispositivo (devId)**: identificador numérico del termostato
-     (visible en la URL del portal web al entrar en el control del
-     dispositivo, `control.php?devId=XXXXXX`).
+1. **Ajustes → Dispositivos y servicios → Añadir integración** → "Salus iT500".
+2. Introduce el **usuario** y **contraseña** de tu cuenta de la app iT500
+   Plus y la **apikey de la app**.
+
+### ¿De dónde sale la apikey?
+
+La apikey identifica a la *aplicación* (no a ti) y **no se publica en este
+repositorio**. Cada usuario debe obtenerla de su propia copia de la app
+oficial (por ejemplo, inspeccionando el APK que ya tiene instalado). No la
+compartas públicamente.
+
+### Si ya tenías la versión 1.x
+
+Home Assistant te pedirá reautenticar: introduce usuario, contraseña y
+apikey. Las entidades y su historial se conservan.
 
 ## Entidades creadas
 
@@ -68,16 +75,15 @@ de forma totalmente asíncrona (sin bloquear el event loop de HA).
 
 ## Desarrollo
 
-El código fuente vive en `custom_components/salus_it500/`. La carpeta
-`dev_reference/` contiene plataformas descartadas (`sensor.py`,
-`binary_sensor.py`) que se dejan como referencia para quien quiera
-retomarlas, pero **no forman parte del paquete instalable**.
+`custom_components/salus_it500/client.py` es el cliente de la API, sin
+dependencias de Home Assistant. Pruebas: `pytest tests`. Para comprobar
+contra tu termostato (solo lectura por defecto):
+`SALUS_USER`, `SALUS_PASS`, `SALUS_API_KEY` y `python scripts/live_check.py`.
 
 ## Créditos y referencias
 
-El cliente de la API (`salus_api.py`) es una implementación propia, escrita
-analizando directamente las peticiones/respuestas del portal
-`salus-it500.com`, pero el diseño general de esta integración se ha
+El cliente de la API es una implementación propia, escrita analizando
+el tráfico y el comportamiento de la app oficial, pero el diseño general de esta integración se ha
 inspirado en desarrollos previos de la comunidad de Home Assistant para
 este mismo dispositivo:
 
@@ -85,7 +91,7 @@ este mismo dispositivo:
   custom component conocido para el Salus iT500 en Home Assistant.
 - [RichyA/pyit500](https://github.com/RichyA/pyit500) — librería Python
   para la API del iT500, usada como referencia de partida.
-  
+
 ## Licencia
 
 MIT — ver [LICENSE](LICENSE).
